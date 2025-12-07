@@ -6,6 +6,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
 
+import requests        
+from io import BytesIO 
+import pickle
+
+# ====== Hugging Face raw file URLs ======
+HF_URL_MAIN = "https://huggingface.co/datasets/t8nisho/vesta-fraud-data/resolve/main/vesta_condensed_final.csv"
+HF_URL_X_VALID = "https://huggingface.co/datasets/t8nisho/vesta-fraud-data/resolve/main/X_valid_enc.csv"
+HF_URL_Y_VALID = "https://huggingface.co/datasets/t8nisho/vesta-fraud-data/resolve/main/y_valid.csv"
+HF_URL_MODEL = "https://huggingface.co/datasets/t8nisho/vesta-fraud-data/resolve/main/final_lgbm.pkl"
+
 from sklearn.metrics import (
     roc_auc_score,
     recall_score,
@@ -82,17 +92,22 @@ st.markdown(
 @st.cache_data
 def load_main_data():
     # final condensed Vesta dataset with isFraud + engineered features
-    return pd.read_csv("data/vesta_condensed_final.csv")
+    return pd.read_csv(HF_URL_MAIN)
 
 @st.cache_data
 def load_validation_data():
-    X_valid_enc = pd.read_csv("data/X_valid_enc.csv")
-    y_valid = pd.read_csv("data/y_valid.csv")["isFraud"]
+    # Validation features + labels from Hugging Face
+    X_valid_enc = pd.read_csv(HF_URL_X_VALID)
+    y_valid = pd.read_csv(HF_URL_Y_VALID)["isFraud"]
     return X_valid_enc, y_valid
+    
 
 @st.cache_resource
 def load_model():
-    model = joblib.load("models/final_lgbm.pkl")
+    # LightGBM model (.pkl) from Hugging Face
+    response = requests.get(HF_URL_MODEL)
+    response.raise_for_status()
+    model = pickle.load(BytesIO(response.content))
     return model
 
 
@@ -479,3 +494,4 @@ elif page == "Model Performance":
         "confusion matrix at a fixed threshold of 0.30, giving a clear picture of "
         "how well the model detects fraud cases."
     )
+
