@@ -107,7 +107,11 @@ def load_model():
     # LightGBM model (.pkl) from Hugging Face
     response = requests.get(HF_URL_MODEL)
     response.raise_for_status()
-    model = pickle.load(BytesIO(response.content))
+    
+    # Use joblib.load on a BytesIO buffer
+    buffer = BytesIO(response.content)
+    model = joblib.load(buffer)
+    
     return model
 
 
@@ -494,4 +498,5 @@ elif page == "Model Performance":
         "confusion matrix at a fixed threshold of 0.30, giving a clear picture of "
         "how well the model detects fraud cases."
     )
+
 
